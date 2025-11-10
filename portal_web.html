@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Portal Externo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #8B7EC8;
+            --primary-light: #A59BDF;
+            --primary-dark: #6A5CAD;
+            --secondary-color: #D5C9FF;
+            --background-color: #F5F3FF;
+            --text-color: #4A4453;
+            --card-color: #FFFFFF;
+            --shadow: 0 4px 12px rgba(139, 126, 200, 0.15);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .controls {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 15px 0;
+            box-shadow: var(--shadow);
+            z-index: 100;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+        
+        .controls.hidden {
+            transform: translateY(-100%);
+        }
+        
+        .container {
+            width: 95%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .controls-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .logo i {
+            font-size: 24px;
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            backdrop-filter: blur(5px);
+        }
+        
+        button:hover, button:active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 99;
+            background: rgba(139, 126, 200, 0.9);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+            border: none;
+            font-size: 20px;
+        }
+        
+        .back-button:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+        
+        .preview-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .preview-content {
+            flex: 1;
+            border: none;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .iframe-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--primary-color);
+            gap: 15px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--background-color);
+            z-index: 10;
+        }
+        
+        .loading i {
+            font-size: 40px;
+            animation: spin 1.5s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--primary-dark);
+            gap: 15px;
+            text-align: center;
+            padding: 20px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--background-color);
+            z-index: 10;
+        }
+        
+        .error-message i {
+            font-size: 50px;
+            color: var(--primary-light);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            background: var(--primary-color);
+            box-shadow: var(--shadow);
+            transform: translateX(150%);
+            transition: transform 0.4s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.error {
+            background: #FF6B6B;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .controls-content {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .control-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            button {
+                flex: 1;
+            }
+            
+            .back-button {
+                width: 45px;
+                height: 45px;
+                top: 15px;
+                left: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 15px;
+            }
+            
+            .logo {
+                font-size: 18px;
+            }
+            
+            button {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            
+            .back-button {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="controls" id="controls">
+        <div class="container">
+            <div class="controls-content">
+                <div class="logo">
+                    <i class="fas fa-external-link-alt"></i>
+                    <span>Portal Externo - Vista Previa</span>
+                </div>
+                <div class="control-buttons">
+                    <button id="refreshBtn"><i class="fas fa-sync-alt"></i> Actualizar</button>
+                    <button id="fullscreenBtn"><i class="fas fa-expand"></i> Pantalla Completa</button>
+                    <button id="hideControlsBtn"><i class="fas fa-eye-slash"></i> Ocultar Controles</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <button class="back-button" id="backButton" style="display: none;">
+        <i class="fas fa-arrow-left"></i>
+    </button>
+    
+    <div class="preview-container">
+        <div class="preview-content">
+            <div class="iframe-container">
+                <div class="loading" id="loadingIndicator">
+                    <i class="fas fa-spinner"></i>
+                    <p>Cargando contenido...</p>
+                </div>
+                <div class="error-message" id="errorMessage" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>No se pudo cargar el sitio web</h3>
+                    <p>Verifica que la URL sea correcta y que el sitio esté disponible.</p>
+                    <button onclick="location.reload()"><i class="fas fa-redo"></i> Reintentar</button>
+                </div>
+                <iframe id="previewFrame" src="about:blank" style="display: none;"></iframe>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notification" class="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notificationText">Sitio web cargado correctamente</span>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos del DOM
+            const previewFrame = document.getElementById('previewFrame');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            const hideControlsBtn = document.getElementById('hideControlsBtn');
+            const backButton = document.getElementById('backButton');
+            const controls = document.getElementById('controls');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const errorMessage = document.getElementById('errorMessage');
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            // URL predefinida - Cambia esta variable para mostrar otro sitio
+            const TARGET_URL = "https://docs.google.com/forms/d/e/1FAIpQLSe68Pexcmav_kXU-TJ3wZpHvM1mgIJRgPJodJBlm5fIxOQW_Q/viewform?usp=dialog";
+            
+            // Función para mostrar notificaciones
+            function showNotification(message, isError = false) {
+                notificationText.textContent = message;
+                notification.className = 'notification' + (isError ? ' error' : '');
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+            
+            // Función para cargar URL en el iframe
+            function loadUrl(url) {
+                // Mostrar indicador de carga
+                loadingIndicator.style.display = 'flex';
+                errorMessage.style.display = 'none';
+                previewFrame.style.display = 'none';
+                backButton.style.display = 'none';
+                
+                // Cargar la URL en el iframe
+                previewFrame.src = url;
+            }
+            
+            // Evento cuando el iframe termina de cargar
+            previewFrame.addEventListener('load', function() {
+                loadingIndicator.style.display = 'none';
+                previewFrame.style.display = 'block';
+                backButton.style.display = 'flex';
+                showNotification('Sitio web cargado correctamente');
+            });
+            
+            // Evento cuando hay un error en el iframe
+            previewFrame.addEventListener('error', function() {
+                loadingIndicator.style.display = 'none';
+                errorMessage.style.display = 'flex';
+                backButton.style.display = 'none';
+                showNotification('Error al cargar el sitio web', true);
+            });
+            
+            // Actualizar vista previa
+            refreshBtn.addEventListener('click', function() {
+                if (previewFrame.src && previewFrame.src !== 'about:blank') {
+                    loadUrl(previewFrame.src);
+                    showNotification('Vista previa actualizada');
+                }
+            });
+            
+            // Botón de retroceso
+            backButton.addEventListener('click', function() {
+                if (previewFrame.contentWindow && previewFrame.contentWindow.history.length > 1) {
+                    previewFrame.contentWindow.history.back();
+                } else {
+                    showNotification('No hay páginas anteriores para retroceder');
+                }
+            });
+            
+            // Pantalla completa
+            function toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        showNotification('Error al activar pantalla completa', true);
+                    });
+                    fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i> Salir Pantalla Completa';
+                } else {
+                    document.exitFullscreen();
+                    fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i> Pantalla Completa';
+                }
+            }
+            
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            
+            // Activar pantalla completa automáticamente al cargar
+            setTimeout(() => {
+                if (!document.fullscreenElement) {
+                    toggleFullscreen();
+                }
+            }, 500);
+            
+            // Ocultar/mostrar controles
+            hideControlsBtn.addEventListener('click', function() {
+                if (controls.classList.contains('hidden')) {
+                    controls.classList.remove('hidden');
+                    hideControlsBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Ocultar Controles';
+                } else {
+                    controls.classList.add('hidden');
+                    hideControlsBtn.innerHTML = '<i class="fas fa-eye"></i> Mostrar Controles';
+                }
+            });
+            
+            // Detectar tecla ESC para salir de pantalla completa
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && document.fullscreenElement) {
+                    fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i> Pantalla Completa';
+                }
+            });
+            
+            // Prevenir zoom con gestos táctiles
+            document.addEventListener('gesturestart', function(e) {
+                e.preventDefault();
+            });
+            
+            document.addEventListener('gesturechange', function(e) {
+                e.preventDefault();
+            });
+            
+            document.addEventListener('gestureend', function(e) {
+                e.preventDefault();
+            });
+            
+            // Cargar la URL predefinida al iniciar
+            loadUrl(TARGET_URL);
+        });
+    </script>
+</body>
+</html>
